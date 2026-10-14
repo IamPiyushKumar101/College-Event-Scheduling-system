@@ -1,0 +1,8 @@
+import {Router} from 'express';import bcrypt from 'bcryptjs';import passport from 'passport';import User from '../models/User.js';import {asyncRoute,requireAuth} from '../middleware.js';
+const router=Router();
+router.get('/me',(req,res)=>res.json({user:req.user||null}));
+router.post('/signup',asyncRoute(async(req,res)=>{const {name,email,password,club,facultyName,phone}=req.body||{};if(!name||!email||!password||!club)return res.status(400).json({message:'Name, email, password and club are required.'});if(String(password).length<8)return res.status(400).json({message:'Password must be at least 8 characters.'});if(await User.exists({email:String(email).toLowerCase().trim()}))return res.status(409).json({message:'An account with this email already exists.'});const user=await User.create({name,email,passwordHash:await bcrypt.hash(password,12),club,facultyName,phone});req.login(user,err=>{if(err)throw err;res.status(201).json({user});});}));
+router.post('/login',(req,res,next)=>passport.authenticate('local',(err,user,info)=>{if(err)return next(err);if(!user)return res.status(401).json({message:info?.message||'Sign in failed.'});req.login(user,e=>{if(e)return next(e);res.json({user});});})(req,res,next));
+router.post('/logout',(req,res,next)=>req.logout(err=>{if(err)return next(err);req.session.destroy(e=>{if(e)return next(e);res.clearCookie('ruverse.sid');res.json({message:'Signed out successfully.'});});}));
+router.patch('/profile',requireAuth,asyncRoute(async(req,res)=>{const allowed=['name','club','facultyName','phone'];for(const k of allowed)if(req.body[k]!==undefined)req.user[k]=req.body[k];await req.user.save();res.json({user:req.user});}));
+export default router;
