@@ -1,4 +1,3 @@
-
 import 'dotenv/config';
 import express from 'express';
 import mongoose from 'mongoose';
@@ -21,35 +20,41 @@ const uri =
 
 app.set('trust proxy', 1);
 
-// Allow the deployed Vercel frontend and local development frontend.
+// Allowed frontend origins.
+// CLIENT_ORIGIN can contain multiple comma-separated URLs.
 const allowedOrigins = (
   process.env.CLIENT_ORIGIN ||
   'https://college-event-scheduling-system.vercel.app,http://localhost:5173'
 )
   .split(',')
-  .map((origin) => origin.trim().replace(/\/$/, ''))
+  .map((origin) => origin.trim().replace(/\/+$/, ''))
   .filter(Boolean);
 
 const corsOptions = {
   origin(origin, callback) {
-    // Requests without an Origin header (e.g. health checks) are allowed.
-    if (!origin || allowedOrigins.includes(origin.replace(/\/$/, ''))) {
+    // Permit requests without an Origin header, such as health checks.
+    if (!origin) {
       return callback(null, true);
     }
 
-    console.warn(`CORS blocked origin: ${origin}`);
-    return callback(null, false);
+    const normalizedOrigin = origin.replace(/\/+$/, '');
+
+    if (allowedOrigins.includes(normalizedOrigin)) {
+      return callback(null, true);
+    }
+
+    console.warn(`CORS rejected origin: ${origin}`);
+    return callback(new Error(`Origin not allowed by CORS: ${origin}`));
   },
+
   credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  methods: ['GET', 'HEAD', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
   optionsSuccessStatus: 204,
 };
 
-// CORS must be registered before API routes and session middleware.
+// CORS must run before routes, sessions, and authentication middleware.
 app.use(cors(corsOptions));
-app.options(/.*/, cors(corsOptions));
-
 app.use(express.json({ limit: '1mb' }));
 
 app.use(
@@ -60,10 +65,12 @@ app.use(
       'development-only-change-this-secret',
     resave: false,
     saveUninitialized: false,
+
     store: MongoStore.create({
       mongoUrl: uri,
       collectionName: 'sessions',
     }),
+
     cookie: {
       httpOnly: true,
       sameSite: process.env.COOKIE_SAME_SITE || 'none',
@@ -76,6 +83,7 @@ app.use(
 app.use(passport.initialize());
 app.use(passport.session());
 
+// Health check
 app.get('/api/health', (_req, res) => {
   res.json({
     ok: true,
@@ -83,22 +91,31 @@ app.get('/api/health', (_req, res) => {
   });
 });
 
+// API routes
 app.use('/api/auth', authRoutes);
 app.use('/api/events', eventRoutes);
 app.use('/api/venues', venueRoutes);
 
+// Not found handler
 app.use((req, res) => {
   res.status(404).json({
     message: `Route not found: ${req.method} ${req.path}`,
   });
 });
 
+// Error handler
 app.use((err, _req, res, _next) => {
   console.error(err);
 
   if (err.code === 11000) {
     return res.status(409).json({
       message: 'A record with this value already exists.',
+    });
+  }
+
+  if (err.message?.startsWith('Origin not allowed by CORS:')) {
+    return res.status(403).json({
+      message: 'This website origin is not allowed.',
     });
   }
 
@@ -117,7 +134,7 @@ async function start() {
 
     const count = await Venue.countDocuments();
 
-    if (!count) {
+    if (count === 0) {
       await Venue.insertMany([
         {
           name: 'Main Auditorium',
@@ -171,7 +188,7 @@ async function start() {
       console.log('Allowed frontend origins:', allowedOrigins);
     });
   } catch (error) {
-    console.error('Could not connect to MongoDB:', error.message);
+    console.error('Could not connect to MongoDB:', error);
     process.exit(1);
   }
 }
