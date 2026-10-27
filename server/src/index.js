@@ -24,7 +24,9 @@ app.set('trust proxy', 1);
 // CLIENT_ORIGIN can contain multiple comma-separated URLs.
 const allowedOrigins = (
   process.env.CLIENT_ORIGIN ||
-  'https://college-event-scheduling-system.vercel.app,http://localhost:5173'
+  'https://college-event-scheduling-system.vercel.app',
+   'https://college-event-scheduling-system-78cnzp3ls.vercel.app',
+   'http://localhost:5173',
 )
   .split(',')
   .map((origin) => origin.trim().replace(/\/+$/, ''))
