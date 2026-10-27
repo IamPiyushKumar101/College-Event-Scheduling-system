@@ -2,6 +2,67 @@
 
 A MERN stack college event and venue coordination platform inspired by the RUVERSE TechFest 2026 brochure. The interface uses a dark space-inspired canvas, orbital graphics, and RUVERSE yellow accents (rather than copying brochure pages directly). No Java is used anywhere in the application.
 
+1. Project Overview
+
+- Project Title: RUVERSE — College Event Scheduling System
+- Team Members:
+  1. Akshat Hansraj — ERP 6606256
+  2. Abhyanand Pathak — ERP 6606186
+  3. Ankur Kumar Roy — ERP 6606621
+  4. Piyush Kumar — ERP 6606739
+  5. Abdullah — ERP 6606537
+- Technology Stack: React.js, Vite, JavaScript, Node.js, Express.js, MongoDB, and Mongoose.
+- Project Guide/Mentor: Aarshi Gupta
+- Project Objective: To develop a centralized platform for managing college events, submitting event proposals, coordinating venues, and reducing scheduling conflicts.
+
+2. Problem Statement
+
+Managing college events involves coordination between student clubs, organizers, administrators, and venue managers. Manual scheduling can lead to overlapping events, venue conflicts, and inefficient communication.
+
+The College Event Scheduling System provides a centralized web application where users can discover events, coordinators can submit event proposals, and administrators can review proposals and manage venue information. The system also includes scheduling analysis to help identify event conflicts.
+
+3. Features
+
+- Browse approved college events.
+- Search and filter events by relevant criteria.
+- Register and log in as a club coordinator.
+- Submit event proposals with event details and timings.
+- Request venues for events.
+- Validate venue capacity and scheduling conflicts.
+- Allow administrators to review and manage event proposals.
+- Save or mark events of interest where supported.
+- View venue information.
+- Analyze scheduling conflicts and venue allocation.
+
+4. Technology Stack
+
+Frontend
+
+- React.js
+- Vite
+- JavaScript
+- HTML5
+- CSS3
+
+Backend
+
+- Node.js
+- Express.js
+
+Database
+
+- MongoDB
+- Mongoose
+
+Authentication and Tools
+
+- Passport Local Strategy
+- bcrypt
+- express-session
+- npm
+- Git and GitHub
+
+
 ## Stack
 - **Frontend:** React 18, Vite, Lucide icons, responsive CSS
 - **Backend:** Node.js, Express
