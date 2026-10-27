@@ -1,3 +1,4 @@
+
 import 'dotenv/config';
 import express from 'express';
 import mongoose from 'mongoose';
@@ -21,16 +22,25 @@ const uri =
 app.set('trust proxy', 1);
 
 // Allowed frontend origins.
-// CLIENT_ORIGIN can contain multiple comma-separated URLs.
-const allowedOrigins = (
-  process.env.CLIENT_ORIGIN ||
+// CLIENT_ORIGIN may contain comma-separated URLs.
+const defaultOrigins = [
   'https://college-event-scheduling-system.vercel.app',
-   'https://college-event-scheduling-system-78cnzp3ls.vercel.app',
-   'http://localhost:5173',
-)
+  'https://college-event-scheduling-system-78cnzp3ls.vercel.app',
+  'http://localhost:5173',
+];
+
+const environmentOrigins = (process.env.CLIENT_ORIGIN || '')
   .split(',')
-  .map((origin) => origin.trim().replace(/\/+$/, ''))
+  .map((origin) => origin.trim())
   .filter(Boolean);
+
+const allowedOrigins = [
+  ...new Set(
+    [...defaultOrigins, ...environmentOrigins].map((origin) =>
+      origin.replace(/\/+$/, '')
+    )
+  ),
+];
 
 const corsOptions = {
   origin(origin, callback) {
@@ -46,7 +56,9 @@ const corsOptions = {
     }
 
     console.warn(`CORS rejected origin: ${origin}`);
-    return callback(new Error(`Origin not allowed by CORS: ${origin}`));
+    return callback(
+      new Error(`Origin not allowed by CORS: ${origin}`)
+    );
   },
 
   credentials: true,
@@ -55,7 +67,7 @@ const corsOptions = {
   optionsSuccessStatus: 204,
 };
 
-// CORS must run before routes, sessions, and authentication middleware.
+// CORS must run before sessions, Passport, and API routes.
 app.use(cors(corsOptions));
 app.use(express.json({ limit: '1mb' }));
 
